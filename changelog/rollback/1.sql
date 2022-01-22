@@ -1,0 +1,17 @@
+DROP TABLE message;
+DROP TABLE chat;
+DROP TABLE response;
+DROP TABLE vacancy_skills;
+DROP TABLE vacancy;
+DROP TABLE resume_skills;
+DROP TABLE resume;
+DROP TABLE employee;
+DROP TABLE employer;
+DROP TABLE hh_user;
+DROP TABLE organisation;
+DROP TABLE region;
+DROP TABLE work_experience;
+DROP TABLE employment_type;
+DROP TABLE skill;
+DROP TABLE spec_profession;
+DROP TABLE specialisation;
