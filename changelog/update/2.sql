@@ -155,7 +155,11 @@ INSERT
 INTO employee (name, user_id)
         (SELECT 'EMPLOYEE ' || u.id, u.id FROM users AS u);
 
-WITH empl AS (SELECT id, random() compensation_koff FROM employee)
+WITH region_stat AS (SELECT (max(id) - min(id)) diff, min(id) min FROM region),
+     work_experience_stat AS (SELECT (max(id) - min(id)) diff, min(id) min FROM work_experience),
+     employment_type_stat AS (SELECT (max(id) - min(id)) diff, min(id) min FROM employment_type),
+     specialisation_stat AS (SELECT (max(id) - min(id)) diff, min(id) min FROM specialisation),
+     empl AS (SELECT id, random() compensation_koff FROM employee)
 INSERT
 INTO resume (title, compensation_from, compensation_to, description, area_id, work_experience_id, employment_type_id,
              specialisation_id, employee_id, create_date, edit_date)
@@ -163,21 +167,25 @@ INTO resume (title, compensation_from, compensation_to, description, area_id, wo
             e.compensation_koff * 300000,
             (random() * (300000 - e.compensation_koff * 300000)) + e.compensation_koff * 300000,
             'DESCRIPTION ' || e.id,
-            (SELECT id FROM region ORDER BY random() LIMIT 1),
-            (SELECT id FROM work_experience ORDER BY random() LIMIT 1),
-            (SELECT id FROM employment_type ORDER BY random() LIMIT 1),
-            (SELECT id FROM specialisation ORDER BY random() LIMIT 1),
+            floor(random() * (SELECT diff FROM region_stat) + (SELECT min FROM region_stat)),
+            floor(random() * (SELECT diff FROM work_experience_stat) + (SELECT min FROM work_experience_stat)),
+            floor(random() * (SELECT diff FROM employment_type_stat) + (SELECT min FROM employment_type_stat)),
+            floor(random() * (SELECT diff FROM specialisation_stat) + (SELECT min FROM specialisation_stat)),
             e.id,
-            now()::timestamp,
-            now()::timestamp
+            NOW() + (random() * (NOW()+'-31 days' - NOW())) + '-31 days',
+            NOW() + (random() * (NOW()+'-31 days' - NOW())) + '-31 days'
      FROM empl AS e);
 
 WITH res AS (SELECT id FROM resume)
 INSERT
 INTO resume_skills (resume_id, skill_id)
-        (SELECT id, (SELECT id FROM skill ORDER BY random() LIMIT 1) FROM res);
+        (SELECT id, (SELECT id FROM skill WHERE random() < 0.7 LIMIT 1) FROM res);
 
-WITH empl AS (SELECT id, random() compensation_koff, company_id FROM employer)
+WITH region_stat AS (SELECT (max(id) - min(id)) diff, min(id) min FROM region),
+     work_experience_stat AS (SELECT (max(id) - min(id)) diff, min(id) min FROM work_experience),
+     employment_type_stat AS (SELECT (max(id) - min(id)) diff, min(id) min FROM employment_type),
+     specialisation_stat AS (SELECT (max(id) - min(id)) diff, min(id) min FROM specialisation),
+     empl AS (SELECT id, random() compensation_koff, company_id FROM employer)
 INSERT
 INTO vacancy (title, compensation_from, compensation_to, description, area_id, work_experience_id, employment_type_id,
               specialisation_id, hr_id, company_id, create_date)
@@ -185,30 +193,30 @@ INTO vacancy (title, compensation_from, compensation_to, description, area_id, w
             e.compensation_koff * 300000,
             (random() * (300000 - e.compensation_koff * 300000)) + e.compensation_koff * 300000,
             'DESCRIPTION ' || e.id,
-            (SELECT id FROM region ORDER BY random() LIMIT 1),
-            (SELECT id FROM work_experience ORDER BY random() LIMIT 1),
-            (SELECT id FROM employment_type ORDER BY random() LIMIT 1),
-            (SELECT id FROM specialisation ORDER BY random() LIMIT 1),
+            floor(random() * (SELECT diff FROM region_stat) + (SELECT min FROM region_stat)),
+            floor(random() * (SELECT diff FROM work_experience_stat) + (SELECT min FROM work_experience_stat)),
+            floor(random() * (SELECT diff FROM employment_type_stat) + (SELECT min FROM employment_type_stat)),
+            floor(random() * (SELECT diff FROM specialisation_stat) + (SELECT min FROM specialisation_stat)),
             e.id,
             e.company_id,
-            now()::timestamp
+            NOW() + (random() * (NOW()+'-31 days' - NOW())) + '-31 days'
      FROM empl AS e);
 
 WITH vac AS (SELECT id FROM vacancy)
 INSERT
 INTO vacancy_skills (vacancy_id, skill_id)
-        (SELECT id, (SELECT id FROM skill ORDER BY random() LIMIT 1) FROM vac);
+        (SELECT id, (SELECT id FROM skill LIMIT 1) FROM vac);
 
 WITH vac AS (SELECT id, company_id, hr_id FROM vacancy)
 INSERT
 INTO response (vacancy_id, employee_id, employer_id, company_id, create_date)
-    (SELECT vac.id, (SELECT id FROM employee ORDER BY random() LIMIT 1), vac.hr_id, vac.company_id, now()::timestamp
+    (SELECT vac.id, (SELECT id FROM employee LIMIT 1), vac.hr_id, vac.company_id, NOW() + (random() * (NOW()+'-7 days' - NOW())) + '-7 days'
      FROM vac);
 
-WITH res AS (SELECT id, employee_id, (SELECT id FROM employer ORDER BY random() LIMIT 1) rand_employer_id FROM resume)
+WITH res AS (SELECT id, employee_id, (SELECT id FROM employer LIMIT 1) rand_employer_id FROM resume)
 INSERT
 INTO response (resume_id, employee_id, employer_id, company_id, create_date)
-    (SELECT res.id, res.employee_id, employer.id, employer.company_id, now()::timestamp
+    (SELECT res.id, res.employee_id, employer.id, employer.company_id, NOW() + (random() * (NOW()+'-7 days' - NOW())) + '-7 days'
      FROM res
               INNER JOIN employer ON res.rand_employer_id = employer.id);
 
@@ -218,6 +226,6 @@ INTO chat (title, response_id, create_date)
     (SELECT 'CHAT FOR RESPONSE ' || resp.id, resp.id, resp.create_date FROM resp);
 
 INSERT INTO message (text, employee_id, employer_id, create_date)
-    (SELECT 'MESSAGE FOR CHAT ' || chat.id, r.employee_id, r.employer_id, now()::timestamp
+    (SELECT 'MESSAGE FOR CHAT ' || chat.id, r.employee_id, r.employer_id, NOW() + (random() * (NOW()+'-7 days' - NOW())) + '-7 days'
      FROM chat
               INNER JOIN response r on r.id = chat.response_id);
