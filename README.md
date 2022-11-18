@@ -23,3 +23,7 @@ liquibase update
 
 3. **Delete db scema and data**
 liquibase rollbackCount 2
+
+The task from hh-interview that is connected with current task:
+![hh](https://user-images.githubusercontent.com/23243577/202771950-16199b6f-d178-4850-8152-29d255c2b29b.png)
+
